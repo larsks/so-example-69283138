@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      volumes:
+        - name: postgres-init-scripts
+          configMap:
+            name: postgres-init-scripts
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data
+      containers:
+        - name: postgres-container
+          image: postgres
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql
+            - name: postgres-init-scripts
+              mountPath: /docker-entrypoint-initdb.d/create-dominion-db.sql
+              subPath: create-dominion-db.sql
+          envFrom:
+            - configMapRef:
+                name: postgres-internal-cnf
+          ports:
+            - containerPort: 5432
